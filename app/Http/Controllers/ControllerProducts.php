@@ -18,6 +18,48 @@ class ControllerProducts extends Controller
         return new ProductsResource('success', 'List of all products', $products);
     }
 
+    public function decreaseStock(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'Failed',
+                'message' => 'Validation error',
+                'data' => $validator->errors()
+            ], 422);
+        }
+
+        $product = Products::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'status' => 'Failed',
+                'message' => 'Product not found',
+                'data' => null
+            ], 404);
+        }
+
+        if ($product->stock < $request->quantity) {
+            return response()->json([
+                'status' => 'Failed',
+                'message' => 'Stok tidak mencukupi',
+                'data' => null
+            ], 400);
+        }
+
+        $product->stock = $product->stock - $request->quantity;
+        $product->save();
+
+        return response()->json([
+            'status' => 'Success',
+            'message' => 'Stock berhasil dikurangi',
+            'data' => $product
+        ]);
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -57,7 +99,7 @@ class ControllerProducts extends Controller
     public function update(Request $request, string $id)
     {
         $products = Products::find($id);
-        if ($products){
+        if ($products) {
             $products->update($request->all());
             return new ProductsResource('success', 'Product updated successfully', $products);
         } else {
@@ -78,4 +120,38 @@ class ControllerProducts extends Controller
             return new ProductsResource('error', 'Product not found', null);
         }
     }
+
+//     public function decreaseStock(Request $request, $id)
+// {
+//     $request->validate([
+//         'quantity' => 'required|integer|min:1',
+//     ]);
+
+//     $product = Product::find($id);
+
+//     if (!$product) {
+//         return response()->json([
+//             'status' => 'Failed',
+//             'message' => 'Product not found',
+//             'data' => null
+//         ], 404);
+//     }
+
+//     if ($product->stock < $request->quantity) {
+//         return response()->json([
+//             'status' => 'Failed',
+//             'message' => 'Stok tidak mencukupi',
+//             'data' => null
+//         ], 400);
+//     }
+
+//     $product->stock -= $request->quantity;
+//     $product->save();
+
+//     return response()->json([
+//         'status' => 'Success',
+//         'message' => 'Stock berhasil dikurangi',
+//         'data' => $product
+//     ]);
+// }
 }
